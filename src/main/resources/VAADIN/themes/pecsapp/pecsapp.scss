@@ -1,0 +1,35 @@
+@import "../valo/valo.scss";
+
+@mixin pecsapp {
+
+  $v-font-size: 14px;
+
+  @include valo;
+
+  .page-panel {
+    background-color: $v-background-color;
+
+    .page {
+      margin: 20px;
+      background-color: white;
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+
+      .page-row + .page-row {
+        border-top: 1px dotted lightgray;
+      }
+
+      .page-row-cell + .page-row-cell {
+        border-left: 1px dotted lightgray;
+      }
+
+      .page-row-cell {
+        padding: 15px;
+      }
+
+      .no-image {
+        border: 1px dashed lightgray;
+        text-align: center;
+      }
+    }
+  }
+}

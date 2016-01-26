@@ -1,0 +1,3 @@
+pecsapp:
+  file-storage:
+    directory: /tmp/pecsapp
