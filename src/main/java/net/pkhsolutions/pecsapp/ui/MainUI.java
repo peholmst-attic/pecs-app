@@ -6,6 +6,7 @@ import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import net.pkhsolutions.pecsapp.model.PageModel;
 import net.pkhsolutions.pecsapp.ui.components.PageLayoutComboBox;
 import net.pkhsolutions.pecsapp.ui.components.PagePanel;
 import net.pkhsolutions.pecsapp.ui.themes.PecsAppTheme;
@@ -24,15 +25,15 @@ public class MainUI extends UI {
         toolbar.setSpacing(true);
         layout.addComponent(toolbar);
 
+        PageModel pageModel = new PageModel();
+
         PageLayoutComboBox pageLayout = new PageLayoutComboBox("Layout");
+        pageLayout.setPropertyDataSource(pageModel.getLayout());
         toolbar.addComponent(pageLayout);
 
-        PagePanel pagePanel = new PagePanel();
+        PagePanel pagePanel = new PagePanel(pageModel);
         layout.addComponent(pagePanel);
         layout.setExpandRatio(pagePanel, 1);
-
-        pageLayout.setValue(pagePanel.getLayout());
-        pageLayout.addValueChangeListener((evt) -> pagePanel.setLayout(pageLayout.getValue()));
     }
 
 }

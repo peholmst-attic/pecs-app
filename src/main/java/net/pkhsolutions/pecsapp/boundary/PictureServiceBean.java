@@ -27,9 +27,4 @@ class PictureServiceBean implements PictureService {
     public PictureDescriptor updateDescriptor(PictureDescriptor pictureDescriptor) {
         return null;
     }
-
-    @Override
-    public List<PictureDescriptor> getPicturesInLibrary(Library library) {
-        return null;
-    }
 }

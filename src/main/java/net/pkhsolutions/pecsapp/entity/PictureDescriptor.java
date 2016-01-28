@@ -1,12 +1,10 @@
 package net.pkhsolutions.pecsapp.entity;
 
-import net.pkhsolutions.pecsapp.model.Picture;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.util.MimeType;
 
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 import java.util.Objects;
 
 @Entity
@@ -42,7 +40,7 @@ public class PictureDescriptor extends AbstractPersistable<Long> {
         return MimeType.valueOf(mimeType);
     }
 
-    public void setMimeType(@NotNull  MimeType mimeType) {
+    public void setMimeType(@NotNull MimeType mimeType) {
         this.mimeType = Objects.requireNonNull(mimeType).toString();
     }
 }

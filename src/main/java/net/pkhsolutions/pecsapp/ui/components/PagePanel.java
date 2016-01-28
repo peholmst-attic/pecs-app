@@ -1,34 +1,59 @@
+/*
+ * Copyright (C) 2016 Petter Holmström
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package net.pkhsolutions.pecsapp.ui.components;
 
+import com.vaadin.data.Property;
 import com.vaadin.ui.CssLayout;
 import com.vaadin.ui.Panel;
 import net.pkhsolutions.pecsapp.entity.PageLayout;
 import net.pkhsolutions.pecsapp.entity.PageOrientation;
+import net.pkhsolutions.pecsapp.model.PageModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * TODO document me
+ */
 public class PagePanel extends Panel {
 
-    private PageLayout layout;
+    private final PageModel model;
     private CssLayout page;
     private CssLayout[] rows;
     private PictureLayout[][] cells;
 
-    public PagePanel() {
+    public PagePanel(@NotNull PageModel model) {
+        this.model = Objects.requireNonNull(model);
         addStyleName("page-panel");
         setSizeFull();
         page = new CssLayout();
         page.addStyleName("page");
         setContent(page);
-        setLayout(PageLayout.A4_PORTRAIT_3_BY_4);
+        model.getLayout().addValueChangeListener(this::updateLayout);
+        updateLayout(null);
     }
 
-    public void setLayout(@NotNull PageLayout layout) {
-        if (Objects.requireNonNull(layout).equals(this.layout)) {
-            return;
-        }
-        this.layout = layout;
+    @NotNull
+    public PageModel getModel() {
+        return model;
+    }
+
+    private void updateLayout(Property.ValueChangeEvent event) {
+        final PageLayout layout = Objects.requireNonNull(model.getLayout().getValue());
         if (layout.getOrientation().equals(PageOrientation.PORTRAIT)) {
             page.setWidth(layout.getPageSize().getWidthMm(), Unit.MM);
             page.setHeight(layout.getPageSize().getHeightMm(), Unit.MM);
@@ -49,7 +74,7 @@ public class PagePanel extends Panel {
             page.addComponent(row);
             rows[i] = row;
             for (int j = 0; j < layout.getColumns(); ++j) {
-                PictureLayout cell = new PictureLayout(layout);
+                PictureLayout cell = new PictureLayout(model.getPictureModel(j, i));
                 cell.addStyleName("page-row-cell");
                 cell.setWidth(cellWidth, page.getWidthUnits());
                 cell.setHeight("100%");
@@ -57,10 +82,5 @@ public class PagePanel extends Panel {
                 cells[i][j] = cell;
             }
         }
-    }
-
-    @NotNull
-    public PageLayout getLayout() {
-        return layout;
     }
 }

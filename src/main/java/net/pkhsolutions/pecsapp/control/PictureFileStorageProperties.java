@@ -17,10 +17,12 @@
 package net.pkhsolutions.pecsapp.control;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * Properties for {@link PictureFileStorage}.
  */
+@Component
 @ConfigurationProperties(prefix = "pecsapp.file-storage")
 public class PictureFileStorageProperties {
 
