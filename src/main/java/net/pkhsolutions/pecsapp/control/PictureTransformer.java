@@ -17,6 +17,7 @@
 package net.pkhsolutions.pecsapp.control;
 
 import net.pkhsolutions.pecsapp.entity.PageLayout;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,11 +29,11 @@ import java.awt.image.BufferedImage;
  * Control class for scaling {@link BufferedImage}s.
  */
 @Service
-public class PictureScale {
+public class PictureTransformer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PictureScale.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PictureTransformer.class);
 
-    PictureScale() {
+    PictureTransformer() {
     }
 
     /**
@@ -42,7 +43,8 @@ public class PictureScale {
      * @param pageLayout
      * @return
      */
-    public BufferedImage scaleIfNecessary(BufferedImage image, PageLayout pageLayout) {
+    @NotNull
+    public BufferedImage scaleIfNecessary(@NotNull BufferedImage image, @NotNull PageLayout pageLayout) {
         return scaleIfNecessary(image, convertMmToPx(pageLayout.getPictureHeightMm()),
                 convertMmToPx(pageLayout.getPictureWidthMm()));
     }
@@ -55,7 +57,8 @@ public class PictureScale {
      * @param maxWidthInPx
      * @return
      */
-    public BufferedImage scaleIfNecessary(BufferedImage image, int maxHeightInPx, int maxWidthInPx) {
+    @NotNull
+    public BufferedImage scaleIfNecessary(@NotNull BufferedImage image, int maxHeightInPx, int maxWidthInPx) {
         int w = image.getWidth();
         int h = image.getHeight();
 

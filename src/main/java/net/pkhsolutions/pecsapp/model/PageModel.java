@@ -17,8 +17,10 @@
 package net.pkhsolutions.pecsapp.model;
 
 import com.vaadin.data.util.ObjectProperty;
+import net.pkhsolutions.pecsapp.boundary.PictureService;
 import net.pkhsolutions.pecsapp.entity.PageLayout;
 import org.javatuples.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -29,14 +31,22 @@ import java.util.Map;
  */
 public class PageModel implements Serializable {
 
+    private final PictureService pictureService;
+
     private final ObjectProperty<PageLayout> layout = new ObjectProperty<>(PageLayout.A4_PORTRAIT_3_BY_4, PageLayout.class);
 
     private final Map<Pair<Integer, Integer>, PictureModel> pictureModelMap = new HashMap<>();
 
+    public PageModel(PictureService pictureService) {
+        this.pictureService = pictureService;
+    }
+
+    @NotNull
     public ObjectProperty<PageLayout> getLayout() {
         return layout;
     }
 
+    @NotNull
     public PictureModel getPictureModel(int col, int row) {
         if (col < 0 || col > layout.getValue().getColumns()) {
             throw new IndexOutOfBoundsException("Invalid column index");
@@ -48,7 +58,7 @@ public class PageModel implements Serializable {
         Pair<Integer, Integer> coordinates = Pair.with(col, row);
         PictureModel model = pictureModelMap.get(coordinates);
         if (model == null) {
-            model = new PictureModel(this);
+            model = new PictureModel(this, pictureService);
             pictureModelMap.put(coordinates, model);
         }
         return model;

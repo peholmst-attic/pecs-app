@@ -16,113 +16,173 @@
  */
 package net.pkhsolutions.pecsapp.ui.components;
 
-import com.vaadin.event.LayoutEvents;
+import com.vaadin.data.Property;
+import com.vaadin.event.dd.DragAndDropEvent;
+import com.vaadin.event.dd.DropHandler;
+import com.vaadin.event.dd.acceptcriteria.AcceptAll;
+import com.vaadin.event.dd.acceptcriteria.AcceptCriterion;
+import com.vaadin.event.dd.acceptcriteria.ServerSideCriterion;
+import com.vaadin.server.Resource;
+import com.vaadin.server.StreamVariable;
 import com.vaadin.ui.*;
-import net.pkhsolutions.pecsapp.entity.PageLayout;
-import net.pkhsolutions.pecsapp.model.Picture;
 import net.pkhsolutions.pecsapp.model.PictureModel;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.util.MimeType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Optional;
 
 /**
  * TODO document me
  */
-public class PictureLayout extends VerticalLayout {
+public class PictureLayout extends VerticalLayout implements DropHandler {
 
     private final PictureModel model;
-    private MimeType mimeType;
-    private ByteArrayOutputStream uploadStream;
-
-    private Upload upload;
-    private Image preview;
+    private final AcceptCriterion acceptCriterion = new ServerSideCriterion() {
+        @Override
+        public boolean accept(DragAndDropEvent dragEvent) {
+            return isUploadEvent(dragEvent);
+        }
+    };
+    private Image image;
     private TextField title;
     private ProgressBar progressBar;
-    private String fileName;
-    private String name;
-    private Label noImage;
-    private Picture picture;
+    private final Label infoLabel;
+    private final VerticalLayout dropPane;
 
     public PictureLayout(@NotNull PictureModel model) {
         this.model = model;
-        //addLayoutClickListener(this::clickLayout);
+        setSpacing(true);
 
-        noImage = new Label("Klicka för att ladda upp en bild");
-        noImage.addStyleName("preview");
-        noImage.addStyleName("no-image");
-        //noImage.setWidth(pageLayout.getPictureWidthMm(), Unit.MM);
-        //noImage.setHeight(pageLayout.getPictureHeightMm(), Unit.MM);
-        addComponent(noImage);
-        setExpandRatio(noImage, 1f);
-        setComponentAlignment(noImage, Alignment.MIDDLE_CENTER);
+        infoLabel = new Label("Drag och släpp en bild här");
+        infoLabel.setSizeUndefined();
 
-        /*preview = new Image();
-        preview.addStyleName("preview");
-        preview.setWidth(pageLayout.getPictureWidthMm(), Unit.MM);
-        preview.setHeight(pageLayout.getPictureHeightMm(), Unit.MM);
-        preview.setVisible(false);
-        addComponent(preview);
-        setExpandRatio(preview, 1f);
-        setComponentAlignment(preview, Alignment.MIDDLE_CENTER);
+        dropPane = new VerticalLayout();
+        dropPane.setSizeFull();
+        dropPane.addComponent(infoLabel);
+        dropPane.setComponentAlignment(infoLabel, Alignment.MIDDLE_CENTER);
 
-        upload = new Upload();
-        upload.setVisible(true);
-        upload.setButtonCaption(null);
-        upload.setImmediate(true);
-        upload.setReceiver(this::receiveUpload);
-        upload.addStartedListener(this::uploadStarted);
-        upload.addFinishedListener(this::uploadFinished);
-        addComponent(upload);
+        image = new Image();
+        image.setSizeUndefined();
+        dropPane.addComponent(image);
+        dropPane.setComponentAlignment(image, Alignment.MIDDLE_CENTER);
 
         progressBar = new ProgressBar();
         progressBar.setIndeterminate(true);
-        addComponent(progressBar);
-        progressBar.setVisible(false);     */
+        progressBar.setVisible(false);
+        dropPane.addComponent(progressBar);
+        dropPane.setComponentAlignment(progressBar, Alignment.MIDDLE_CENTER);
+
+        DragAndDropWrapper dragAndDropWrapper = new DragAndDropWrapper(dropPane);
+        dragAndDropWrapper.setDropHandler(this);
+        dragAndDropWrapper.setSizeFull();
+        addComponent(dragAndDropWrapper);
+        setExpandRatio(dragAndDropWrapper, 1f);
 
         title = new TextField();
         title.setInputPrompt("Skriv namnet här");
         title.setWidth("100%");
         title.setPropertyDataSource(model.getTitle());
+        title.setImmediate(true);
         addComponent(title);
         setComponentAlignment(title, Alignment.BOTTOM_LEFT);
+
+        model.getImage().addValueChangeListener(this::imageChanged);
+        imageChanged(null);
     }
 
-    private void clickLayout(LayoutEvents.LayoutClickEvent event) {
-        /*if (event.getClickedComponent() == preview || event.getClickedComponent() == noImage) {
-            upload.submitUpload();
-        } */
+    private void imageChanged(Property.ValueChangeEvent event) {
+        Resource resource = model.getImage().getValue();
+        image.setSource(resource);
+        image.setVisible(resource != null);
+        title.setVisible(image.isVisible());
+        infoLabel.setVisible(resource == null);
+        if (infoLabel.isVisible()) {
+            dropPane.addStyleName("drop-box");
+        } else {
+            dropPane.removeStyleName("drop-box");
+        }
     }
 
-    private OutputStream receiveUpload(String fileName, String mimeType) {
-        // TODO Validate mime type
-        uploadStream = new ByteArrayOutputStream();
-        this.fileName = fileName;
-        this.mimeType = MimeType.valueOf(mimeType);
-        return uploadStream;
+    @Override
+    public void drop(DragAndDropEvent event) {
+        extractFile(event).filter(this::isSupportedFile).ifPresent(this::uploadFile);
     }
 
-    private void uploadStarted(Upload.StartedEvent event) {
+    private boolean isUploadEvent(DragAndDropEvent event) {
+        return extractFile(event).map(this::isSupportedFile).orElse(false);
+    }
+
+    private Optional<Html5File> extractFile(DragAndDropEvent event) {
+        if (event.getTransferable() instanceof DragAndDropWrapper.WrapperTransferable) {
+            DragAndDropWrapper.WrapperTransferable tr = (DragAndDropWrapper.WrapperTransferable) event.getTransferable();
+            if (tr.getFiles() != null && tr.getFiles().length == 1) {
+                return Optional.of(tr.getFiles()[0]);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean isSupportedFile(Html5File file) {
+        return model.isSupportedType(MimeType.valueOf(file.getType())); // TODO also check max size
+    }
+
+    private void uploadFile(Html5File file) {
+        final MimeType mimeType = MimeType.valueOf(file.getType());
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final StreamVariable streamVariable = new StreamVariable() {
+            @Override
+            public OutputStream getOutputStream() {
+                return baos;
+            }
+
+            @Override
+            public boolean listenProgress() {
+                return false;
+            }
+
+            @Override
+            public void onProgress(StreamingProgressEvent event) {
+            }
+
+            @Override
+            public void streamingStarted(StreamingStartEvent event) {
+            }
+
+            @Override
+            public void streamingFinished(StreamingEndEvent event) {
+                hideProgressBar();
+                model.upload(new ByteArrayInputStream(baos.toByteArray()), mimeType);
+            }
+
+            @Override
+            public void streamingFailed(StreamingErrorEvent event) {
+                hideProgressBar();
+            }
+
+            @Override
+            public boolean isInterrupted() {
+                return false;
+            }
+        };
+        showProgressBar();
+        file.setStreamVariable(streamVariable);
+    }
+
+    private void showProgressBar() {
         progressBar.setVisible(true);
         getUI().setPollInterval(200);
     }
 
-    private void uploadFinished(Upload.FinishedEvent event) {
+    private void hideProgressBar() {
         progressBar.setVisible(false);
-        getUI().setPollInterval(0);
-        if (event instanceof Upload.SucceededEvent) {
-            try {
-                picture = new Picture(new ByteArrayInputStream(uploadStream.toByteArray()), mimeType);
-                preview.setSource(picture.toResource(150, 200));
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-            preview.setVisible(true);
-            noImage.setVisible(false);
-        }
+        getUI().setPollInterval(-1);
     }
 
+    @Override
+    public AcceptCriterion getAcceptCriterion() {
+        return AcceptAll.get();// acceptCriterion;
+    }
 }

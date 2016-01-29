@@ -14,11 +14,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.pkhsolutions.pecsapp.entity;
+package net.pkhsolutions.pecsapp.control;
+
+import net.pkhsolutions.pecsapp.entity.PictureDescriptor;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * TODO document me
+ * Repository of {@link PictureDescriptor}s.
  */
-public enum PageOrientation {
-    PORTRAIT, LANDSCAPE
+public interface PictureDescriptorRepository extends JpaRepository<PictureDescriptor, Long> {
 }

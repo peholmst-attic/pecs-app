@@ -18,6 +18,7 @@ package net.pkhsolutions.pecsapp.control;
 
 import net.pkhsolutions.pecsapp.entity.PageLayout;
 import net.pkhsolutions.pecsapp.entity.PictureDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,22 +46,23 @@ public class PictureFileStorage {
     private Path directory;
 
     @Autowired
-    PictureFileStorage(PictureFileStorageProperties properties) throws IOException {
+    PictureFileStorage(@NotNull PictureFileStorageProperties properties) throws IOException {
         directory = Paths.get(properties.getDirectory());
         LOGGER.info("Storing picture files in {}", directory);
     }
 
     /**
      * TODO Document me
+     *
      * @param descriptor
      * @param layout
      * @param image
      * @throws IOException
      */
-    public void store(PictureDescriptor descriptor, PageLayout layout, BufferedImage image) throws IOException {
+    public void store(@NotNull PictureDescriptor descriptor, @NotNull Optional<PageLayout> layout, @NotNull BufferedImage image) throws IOException {
         final Path path = getDirectoryForLayout(layout)
                 .resolve(String.format("%d.%s", descriptor.getId(), descriptor.getMimeType().getSubtype()));
-        LOGGER.info("Storing image in {}", path);
+        LOGGER.debug("Storing image in {}", path);
         try (OutputStream outputStream = Files.newOutputStream(path)) {
             ImageIO.write(image, descriptor.getMimeType().getSubtype(), outputStream);
         }
@@ -68,17 +70,19 @@ public class PictureFileStorage {
 
     /**
      * TODO Document me
+     *
      * @param descriptor
      * @param layout
      * @return
      * @throws IOException
      */
-    public Optional<BufferedImage> load(PictureDescriptor descriptor, PageLayout layout) throws IOException {
+    @NotNull
+    public Optional<BufferedImage> load(@NotNull PictureDescriptor descriptor, @NotNull Optional<PageLayout> layout) throws IOException {
         final Path path = getDirectoryForLayout(layout)
                 .resolve(String.format("%d.%s", descriptor.getId(), descriptor.getMimeType().getSubtype()));
-        LOGGER.info("Loading image from {}", path);
+        LOGGER.debug("Loading image from {}", path);
         if (!Files.exists(path)) {
-            LOGGER.info("File {} does not exist", path);
+            LOGGER.warn("File {} does not exist", path);
             return Optional.empty();
         }
         try (InputStream inputStream = Files.newInputStream(path)) {
@@ -86,8 +90,9 @@ public class PictureFileStorage {
         }
     }
 
-    private Path getDirectoryForLayout(PageLayout layout) throws IOException {
-        final Path path = directory.resolve(layout.name().toLowerCase());
+    @NotNull
+    private Path getDirectoryForLayout(@NotNull Optional<PageLayout> layout) throws IOException {
+        final Path path = directory.resolve(layout.map(PageLayout::name).orElse("raw").toLowerCase());
         try {
             return Files.createDirectories(path);
         } catch (FileAlreadyExistsException ex) {

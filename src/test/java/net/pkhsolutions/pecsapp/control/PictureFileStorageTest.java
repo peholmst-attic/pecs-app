@@ -38,10 +38,10 @@ public class PictureFileStorageTest {
         Path destinationPath = tempDirectory.resolve(PageLayout.A4_LANDSCAPE_4_BY_3.name().toLowerCase()).resolve("1.jpeg");
 
         assertFalse(Files.exists(destinationPath));
-        pictureFileStorage.store(descriptor, PageLayout.A4_LANDSCAPE_4_BY_3, exampleImage);
+        pictureFileStorage.store(descriptor, Optional.of(PageLayout.A4_LANDSCAPE_4_BY_3), exampleImage);
         assertTrue(Files.exists(destinationPath));
 
-        Optional<BufferedImage> loadedImage = pictureFileStorage.load(descriptor, PageLayout.A4_LANDSCAPE_4_BY_3);
+        Optional<BufferedImage> loadedImage = pictureFileStorage.load(descriptor, Optional.of(PageLayout.A4_LANDSCAPE_4_BY_3));
         assertTrue(loadedImage.isPresent());
         assertEquals(exampleImage.getWidth(), loadedImage.get().getWidth());
         assertEquals(exampleImage.getHeight(), loadedImage.get().getHeight());
@@ -50,7 +50,7 @@ public class PictureFileStorageTest {
     @Test
     public void load_imageDoesNotExist_emptyOptionalReturned() throws Exception {
         PictureDescriptor descriptor = new PictureDescriptor(1L, "test", MimeTypeUtils.IMAGE_JPEG);
-        Optional<BufferedImage> loadedImage = pictureFileStorage.load(descriptor, PageLayout.A4_PORTRAIT_2_BY_2);
+        Optional<BufferedImage> loadedImage = pictureFileStorage.load(descriptor, Optional.of(PageLayout.A4_PORTRAIT_2_BY_2));
         assertFalse(loadedImage.isPresent());
     }
 }

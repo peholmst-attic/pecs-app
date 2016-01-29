@@ -1,3 +1,7 @@
 pecsapp:
   file-storage:
     directory: /tmp/pecsapp
+
+logging:
+  level:
+    net.pkhsolutions.pecsapp: DEBUG

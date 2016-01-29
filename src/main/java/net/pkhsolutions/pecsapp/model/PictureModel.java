@@ -18,15 +18,29 @@ package net.pkhsolutions.pecsapp.model;
 
 import com.vaadin.data.util.ObjectProperty;
 import com.vaadin.server.Resource;
+import com.vaadin.server.StreamResource;
+import net.pkhsolutions.pecsapp.boundary.PictureService;
+import net.pkhsolutions.pecsapp.entity.PictureDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.MimeType;
 
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * TODO document me
  */
 public class PictureModel implements Serializable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PictureModel.class);
+
+    private final PictureService pictureService;
+
+    private PictureDescriptor descriptor;
 
     private final PageModel pageModel;
 
@@ -34,8 +48,11 @@ public class PictureModel implements Serializable {
 
     private final ObjectProperty<Resource> image = new ObjectProperty<>(null, Resource.class);
 
-    public PictureModel(@NotNull PageModel pageModel) {
+    public PictureModel(@NotNull PageModel pageModel, @NotNull PictureService pictureService) {
         this.pageModel = Objects.requireNonNull(pageModel);
+        this.pictureService = Objects.requireNonNull(pictureService);
+        this.pageModel.getLayout().addValueChangeListener(event -> updateProperties());
+        this.title.addValueChangeListener(event -> titleChanged());
     }
 
     @NotNull
@@ -51,5 +68,42 @@ public class PictureModel implements Serializable {
     @NotNull
     public ObjectProperty<Resource> getImage() {
         return image;
+    }
+
+    public boolean isSupportedType(@NotNull MimeType mimeType) {
+        LOGGER.debug("Checking if {} is a supported type", mimeType);
+        return true; // TODO Implement me!
+    }
+
+    public void upload(@NotNull InputStream rawData, @NotNull MimeType mimeType) {
+        LOGGER.debug("Uploading image of type {}", mimeType);
+        setDescriptor(Optional.of(pictureService.uploadPicture(rawData, mimeType)));
+    }
+
+    public void setDescriptor(@NotNull Optional<PictureDescriptor> descriptor) {
+        LOGGER.debug("Setting descriptor {}", descriptor);
+        this.descriptor = Objects.requireNonNull(descriptor).orElse(null);
+        updateProperties();
+    }
+
+    private void updateProperties() {
+        if (descriptor == null) {
+            title.setValue("");
+            image.setValue(null);
+        } else {
+            title.setValue(descriptor.getTitle());
+            image.setValue(pictureService.downloadPictureForLayout(descriptor, pageModel.getLayout().getValue()).map(this::toResource).orElse(null));
+        }
+    }
+
+    private void titleChanged() {
+        if (descriptor != null && !descriptor.getTitle().equals(title.getValue())) {
+            descriptor.setTitle(title.getValue());
+            descriptor = pictureService.updateDescriptor(descriptor);
+        }
+    }
+
+    private Resource toResource(InputStream inputStream) {
+        return new StreamResource((StreamResource.StreamSource) () -> inputStream, descriptor.getFileName());
     }
 }

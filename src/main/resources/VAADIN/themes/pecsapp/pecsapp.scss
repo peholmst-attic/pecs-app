@@ -25,11 +25,11 @@
       .page-row-cell {
         padding: 15px;
       }
-
-      .no-image {
-        border: 1px dashed lightgray;
-        text-align: center;
-      }
     }
+  }
+
+  .drop-box {
+    border: 4px dashed lightgray;
+    border-radius: 10px;
   }
 }
