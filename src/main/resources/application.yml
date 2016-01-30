@@ -1,7 +1,14 @@
 pecsapp:
   file-storage:
-    directory: /tmp/pecsapp
+    directory: /tmp/pecsapp/images
 
 logging:
   level:
     net.pkhsolutions.pecsapp: DEBUG
+
+spring:
+  datasource:
+    url: jdbc:h2:file:/tmp/pecsapp/db
+  jpa:
+    hibernate:
+      ddl-auto: update

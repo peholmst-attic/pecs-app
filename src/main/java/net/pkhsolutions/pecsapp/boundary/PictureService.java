@@ -34,7 +34,9 @@ public interface PictureService {
 
     @NotNull Optional<InputStream> downloadPictureForLayout(@NotNull PictureDescriptor pictureDescriptor, @NotNull PageLayout layout);
 
-    @NotNull PictureDescriptor updateDescriptor(@NotNull PictureDescriptor pictureDescriptor);
+    @NotNull PictureDescriptor save(@NotNull PictureDescriptor pictureDescriptor);
+
+    boolean isSupportedMimeType(@NotNull MimeType mimeType);
 
     class UploadPictureException extends RuntimeException {
         public UploadPictureException(String message, Throwable cause) {

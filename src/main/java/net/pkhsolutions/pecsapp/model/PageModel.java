@@ -17,14 +17,17 @@
 package net.pkhsolutions.pecsapp.model;
 
 import com.vaadin.data.util.ObjectProperty;
+import net.pkhsolutions.pecsapp.boundary.PageService;
 import net.pkhsolutions.pecsapp.boundary.PictureService;
 import net.pkhsolutions.pecsapp.entity.PageLayout;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Page;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * TODO document me!
@@ -32,18 +35,30 @@ import java.util.Map;
 public class PageModel implements Serializable {
 
     private final PictureService pictureService;
+    private final PageService pageService;
+    private Page entity;
 
     private final ObjectProperty<PageLayout> layout = new ObjectProperty<>(PageLayout.A4_PORTRAIT_3_BY_4, PageLayout.class);
 
     private final Map<Pair<Integer, Integer>, PictureModel> pictureModelMap = new HashMap<>();
 
-    public PageModel(PictureService pictureService) {
+    public PageModel(@NotNull PictureService pictureService, @NotNull PageService pageService) {
         this.pictureService = pictureService;
+        this.pageService = pageService;
     }
 
     @NotNull
     public ObjectProperty<PageLayout> getLayout() {
         return layout;
+    }
+
+    @NotNull
+    public Optional<Page> getEntity() {
+        return Optional.ofNullable(entity);
+    }
+
+    public void setEntity(@NotNull Optional<Page> entity) {
+        this.entity = entity.orElse(null);
     }
 
     @NotNull

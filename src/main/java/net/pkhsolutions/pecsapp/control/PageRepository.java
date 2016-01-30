@@ -14,19 +14,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.pkhsolutions.pecsapp.boundary;
+package net.pkhsolutions.pecsapp.control;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
-
-import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * TODO Document me
+ * Repository of {@link net.pkhsolutions.pecsapp.entity.Page}s.
  */
-public interface PageService {
-
-    @NotNull Optional<Page> findById(@NotNull Long id);
-
-    @NotNull Page save(@NotNull Page page);
+public interface PageRepository extends JpaRepository<Page, Long> {
 }

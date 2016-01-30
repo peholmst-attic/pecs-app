@@ -21,7 +21,6 @@ import com.vaadin.event.dd.DragAndDropEvent;
 import com.vaadin.event.dd.DropHandler;
 import com.vaadin.event.dd.acceptcriteria.AcceptAll;
 import com.vaadin.event.dd.acceptcriteria.AcceptCriterion;
-import com.vaadin.event.dd.acceptcriteria.ServerSideCriterion;
 import com.vaadin.server.Resource;
 import com.vaadin.server.StreamVariable;
 import com.vaadin.ui.*;
@@ -40,12 +39,6 @@ import java.util.Optional;
 public class PictureLayout extends VerticalLayout implements DropHandler {
 
     private final PictureModel model;
-    private final AcceptCriterion acceptCriterion = new ServerSideCriterion() {
-        @Override
-        public boolean accept(DragAndDropEvent dragEvent) {
-            return isUploadEvent(dragEvent);
-        }
-    };
     private Image image;
     private TextField title;
     private ProgressBar progressBar;
@@ -84,13 +77,33 @@ public class PictureLayout extends VerticalLayout implements DropHandler {
         title = new TextField();
         title.setInputPrompt("Skriv namnet här");
         title.setWidth("100%");
-        title.setPropertyDataSource(model.getTitle());
         title.setImmediate(true);
         addComponent(title);
         setComponentAlignment(title, Alignment.BOTTOM_LEFT);
 
-        model.getImage().addValueChangeListener(this::imageChanged);
         imageChanged(null);
+    }
+
+    private void attachListeners() {
+        model.getImage().addValueChangeListener(this::imageChanged);
+        title.setPropertyDataSource(model.getTitle());
+    }
+
+    private void detachListeners() {
+        model.getImage().removeValueChangeListener(this::imageChanged);
+        title.setPropertyDataSource(null);
+    }
+
+    @Override
+    public void attach() {
+        super.attach();
+        attachListeners();
+    }
+
+    @Override
+    public void detach() {
+        detachListeners();
+        super.detach();
     }
 
     private void imageChanged(Property.ValueChangeEvent event) {
@@ -108,7 +121,11 @@ public class PictureLayout extends VerticalLayout implements DropHandler {
 
     @Override
     public void drop(DragAndDropEvent event) {
-        extractFile(event).filter(this::isSupportedFile).ifPresent(this::uploadFile);
+        if (event.getTransferable().getSourceComponent() instanceof PictureLayout) {
+
+        } else {
+            extractFile(event).filter(this::isSupportedFile).ifPresent(this::uploadFile);
+        }
     }
 
     private boolean isUploadEvent(DragAndDropEvent event) {
@@ -183,6 +200,6 @@ public class PictureLayout extends VerticalLayout implements DropHandler {
 
     @Override
     public AcceptCriterion getAcceptCriterion() {
-        return AcceptAll.get();// acceptCriterion;
+        return AcceptAll.get();// TODO Accept only valid drags
     }
 }

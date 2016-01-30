@@ -1,4 +1,4 @@
-package net.pkhsolutions.pecsapp.ui.themes;
+package net.pkhsolutions.pecsapp.ui.theme;
 
 import com.vaadin.ui.themes.ValoTheme;
 

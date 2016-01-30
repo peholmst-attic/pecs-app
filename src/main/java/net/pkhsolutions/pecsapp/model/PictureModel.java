@@ -16,6 +16,7 @@
  */
 package net.pkhsolutions.pecsapp.model;
 
+import com.vaadin.data.Property;
 import com.vaadin.data.util.ObjectProperty;
 import com.vaadin.server.Resource;
 import com.vaadin.server.StreamResource;
@@ -29,7 +30,6 @@ import org.springframework.util.MimeType;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * TODO document me
@@ -40,24 +40,21 @@ public class PictureModel implements Serializable {
 
     private final PictureService pictureService;
 
-    private PictureDescriptor descriptor;
-
     private final PageModel pageModel;
 
     private final ObjectProperty<String> title = new ObjectProperty<>("", String.class);
 
     private final ObjectProperty<Resource> image = new ObjectProperty<>(null, Resource.class);
 
+    private final ObjectProperty<PictureDescriptor> descriptor = new ObjectProperty<>(null, PictureDescriptor.class);
+
     public PictureModel(@NotNull PageModel pageModel, @NotNull PictureService pictureService) {
         this.pageModel = Objects.requireNonNull(pageModel);
         this.pictureService = Objects.requireNonNull(pictureService);
+        // PictureModel always has same scope as PageModel, no need to remove the listener
         this.pageModel.getLayout().addValueChangeListener(event -> updateProperties());
-        this.title.addValueChangeListener(event -> titleChanged());
-    }
-
-    @NotNull
-    public PageModel getPageModel() {
-        return pageModel;
+        this.title.addValueChangeListener(this::titleChanged);
+        this.descriptor.addValueChangeListener(this::descriptorChanged);
     }
 
     @NotNull
@@ -70,40 +67,67 @@ public class PictureModel implements Serializable {
         return image;
     }
 
+    @NotNull
+    public ObjectProperty<PictureDescriptor> getDescriptor() {
+        return descriptor;
+    }
+
+    /**
+     * @param mimeType
+     * @return
+     */
     public boolean isSupportedType(@NotNull MimeType mimeType) {
         LOGGER.debug("Checking if {} is a supported type", mimeType);
-        return true; // TODO Implement me!
+        return pictureService.isSupportedMimeType(mimeType);
     }
 
+    /**
+     * @param rawData
+     * @param mimeType
+     */
     public void upload(@NotNull InputStream rawData, @NotNull MimeType mimeType) {
         LOGGER.debug("Uploading image of type {}", mimeType);
-        setDescriptor(Optional.of(pictureService.uploadPicture(rawData, mimeType)));
+        descriptor.setValue(pictureService.uploadPicture(rawData, mimeType));
     }
 
-    public void setDescriptor(@NotNull Optional<PictureDescriptor> descriptor) {
-        LOGGER.debug("Setting descriptor {}", descriptor);
-        this.descriptor = Objects.requireNonNull(descriptor).orElse(null);
-        updateProperties();
+    /**
+     * @param source
+     */
+    public void drop(@NotNull PictureModel source) {
+        final PictureDescriptor thisDescriptor = descriptor.getValue();
+        final PictureDescriptor sourceDescriptor = source.descriptor.getValue();
+        if (sourceDescriptor != null) {
+            descriptor.setValue(sourceDescriptor);
+            source.descriptor.setValue(thisDescriptor);
+        }
     }
 
     private void updateProperties() {
-        if (descriptor == null) {
+        final PictureDescriptor thisDescriptor = descriptor.getValue();
+        if (thisDescriptor == null) {
             title.setValue("");
             image.setValue(null);
         } else {
-            title.setValue(descriptor.getTitle());
-            image.setValue(pictureService.downloadPictureForLayout(descriptor, pageModel.getLayout().getValue()).map(this::toResource).orElse(null));
+            title.setValue(thisDescriptor.getTitle());
+            image.setValue(pictureService.downloadPictureForLayout(thisDescriptor,
+                    pageModel.getLayout().getValue()).map(stream -> toResource(stream, thisDescriptor.getFileName()))
+                    .orElse(null));
         }
     }
 
-    private void titleChanged() {
-        if (descriptor != null && !descriptor.getTitle().equals(title.getValue())) {
-            descriptor.setTitle(title.getValue());
-            descriptor = pictureService.updateDescriptor(descriptor);
+    private void titleChanged(Property.ValueChangeEvent event) {
+        final PictureDescriptor thisDescriptor = descriptor.getValue();
+        if (thisDescriptor != null && !thisDescriptor.getTitle().equals(title.getValue())) {
+            thisDescriptor.setTitle(title.getValue());
+            descriptor.setValue(pictureService.save(thisDescriptor));
         }
     }
 
-    private Resource toResource(InputStream inputStream) {
-        return new StreamResource((StreamResource.StreamSource) () -> inputStream, descriptor.getFileName());
+    private void descriptorChanged(Property.ValueChangeEvent event) {
+        updateProperties();
+    }
+
+    private Resource toResource(InputStream inputStream, String fileName) {
+        return new StreamResource((StreamResource.StreamSource) () -> inputStream, fileName);
     }
 }

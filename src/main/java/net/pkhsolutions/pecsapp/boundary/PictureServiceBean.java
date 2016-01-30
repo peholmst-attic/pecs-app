@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
+import org.springframework.util.MimeTypeUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -90,8 +91,13 @@ class PictureServiceBean implements PictureService {
 
     @NotNull
     @Override
-    public PictureDescriptor updateDescriptor(@NotNull PictureDescriptor pictureDescriptor) {
-        LOGGER.debug("Updating descriptor {}", pictureDescriptor);
+    public PictureDescriptor save(@NotNull PictureDescriptor pictureDescriptor) {
+        LOGGER.debug("Saving descriptor {}", pictureDescriptor);
         return pictureDescriptorRepository.saveAndFlush(pictureDescriptor);
+    }
+
+    @Override
+    public boolean isSupportedMimeType(@NotNull MimeType mimeType) {
+        return mimeType.equals(MimeTypeUtils.IMAGE_JPEG) || mimeType.equals(MimeTypeUtils.IMAGE_PNG) || mimeType.equals(MimeTypeUtils.IMAGE_GIF);
     }
 }
