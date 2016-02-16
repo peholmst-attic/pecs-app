@@ -16,7 +16,7 @@
  */
 package net.pkhsolutions.pecsapp.control;
 
-import org.springframework.data.domain.Page;
+import net.pkhsolutions.pecsapp.entity.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**

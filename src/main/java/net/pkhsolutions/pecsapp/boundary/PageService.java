@@ -16,8 +16,8 @@
  */
 package net.pkhsolutions.pecsapp.boundary;
 
+import net.pkhsolutions.pecsapp.entity.Page;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.data.domain.Page;
 
 import java.util.Optional;
 

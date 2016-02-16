@@ -17,11 +17,11 @@
 package net.pkhsolutions.pecsapp.boundary;
 
 import net.pkhsolutions.pecsapp.control.PageRepository;
+import net.pkhsolutions.pecsapp.entity.Page;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
